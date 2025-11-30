@@ -14,5 +14,7 @@ class job extends Model
         'status',
         'id_usuario',
         'output',
+        'id_slurm',
+        'remote_dir',
     ];
 }

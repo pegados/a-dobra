@@ -17,16 +17,17 @@ class SlurmStatusChecker implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    private $slurmService;
+    private $id_slurm_job;
+    
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct(SlurmClusterService $slurmService)
+    public function __construct($id_slurm_job_param)
     {
         //inicialização do service
-        $this->slurmService = $slurmService;
+        $this->id_slurm_job = $id_slurm_job_param;
     }
 
     /**
@@ -34,29 +35,37 @@ class SlurmStatusChecker implements ShouldQueue
      *
      * @return void
      */
-    public function handle($id_slurm_job)
+    public function handle(SlurmClusterService $slurmService)
     {
+        Log::info("Executando job SLURM para ID " . $this->id_slurm_job);
         //execução das etapas para finalizar o job
-        $status_job = $this->slurmService->waitForJob($id_slurm_job);
+        $status_job = $slurmService->waitForJob($this->id_slurm_job);
+        
+        //var_dump($status_job);
 
         //Quando demora demais e não finaliza é dado como erro na execução
-        if(!$status_job == 'COMPLETED'){
+        if(!($status_job == 'COMPLETED')){
             $job_local = DB::table('jobs')
-                ->where('id_slurm', $id_slurm_job)
+                ->where('id_slurm', $this->id_slurm_job)
                 ->update(['status' => 'E']);
             return;
         }
         //altera o status para finalizado
         $job_local = DB::table('jobs')
-                ->where('id_slurm', $id_slurm_job)
+                ->where('id_slurm', $this->id_slurm_job)
                 ->update(['status' => 'F']);
 
         $job_local = DB::table('jobs')
-                ->where('id_slurm', $id_slurm_job)->get();
+                ->where('id_slurm', $this->id_slurm_job)->first();
 
+        if (!$job_local) {
+            Log::error("Job não encontrado para id_slurm: {$this->id_slurm_job}");
+            return;
+        }
 
+        
         //baixa o resultado da execução do job
-        $arquivos_baixados = $this->slurmService->downloadJobResults($job_local->remote_dir);
+        $arquivos_baixados = $slurmService->downloadJobResults($job_local->remote_dir);
 
         if(count($arquivos_baixados) == 0){
             Log::error('Erro ao baixar os arquivos do Job');
@@ -64,7 +73,7 @@ class SlurmStatusChecker implements ShouldQueue
         }
 
         //limpar os diretorios do computador remoto
-        limpar_ok = $this->slurmService->cleanupJob($job_local->remote_dir);
-        return;
+        $limpar_ok = $slurmService->cleanupJob($job_local->remote_dir);
+        //return;
     }
 }

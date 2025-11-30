@@ -47,8 +47,9 @@ class jobController extends Controller
 
         //captura o id do job no slurm
         $output_format = explode('/', $output);
-        $id_local = $output_format[4];
+        $id_local = $output_format[3];
 
+        //echo $id_local;
         
         $this->submitJob($request->input('idUsuario'), $request->file('fileJob'), "job_submetido", $id_local);
         return redirect()->action('App\Http\Controllers\jobController@listarJobUsuarios', ['id_usuario' => $request->input('idUsuario')]);
@@ -75,6 +76,8 @@ class jobController extends Controller
                 $inputFiles,//será substituido por $filenameComExtensao que vem da função de salvar
                 $jobname
             );
+
+            //var_dump($jobInfo);
             // Atualiza o job com o id do slurm
             $job_local = Job::find($id_job_local);
             $job_local->id_slurm = $jobInfo['slurm_job_id'];
@@ -82,7 +85,7 @@ class jobController extends Controller
             $job_local->save();
 
             // dispara o job (não aguarda)
-            dispatch(new SlurmStatusChecker($id_job_local));
+            dispatch(new SlurmStatusChecker($job_local->id_slurm));
 
             return response()->json([
                 'success' => true,

@@ -168,7 +168,7 @@ class SlurmClusterService
     public function waitForJob($slurmJobId, $maxWaitTime = 3600, $checkInterval = 30)
     {
         $startTime = time();
-        
+        //Log::info("Executando o waitForJob");
         while (time() - $startTime < $maxWaitTime) {
             $status = $this->getJobStatus($slurmJobId);
             
