@@ -44,12 +44,16 @@ class jobController extends Controller
         $job->output = $output;
         $job->save();
 
+        //captura o id do job no slurm
+        $output_format = explode('/', $output);
+
+        $id_local = $output_format[4];
         
-        $this->submitJob($request->input('idUsuario'), $request->file('fileJob'), "teste");
+        $this->submitJob($request->input('idUsuario'), $request->file('fileJob'), "job_submetido", $id_local);
         return redirect()->action('App\Http\Controllers\jobController@listarJobUsuarios', ['id_usuario' => $request->input('idUsuario')]);
     }
 
-    public function submitJob($idUsuario, $inputFile, $jobname){
+    public function submitJob($idUsuario, $inputFile, $jobname, $id_job_local){
         try {
             // Script que será executado no cluster
             // não precisa, pois o script já existe lá 
@@ -70,6 +74,10 @@ class jobController extends Controller
                 $inputFiles,//será substituido por $filenameComExtensao que vem da função de salvar
                 $jobname
             );
+            // Atualiza o job com o id do slurm
+            $job_local = Job::find($id_job_local);
+            $job_local->id_slurm = $jobInfo['slurm_job_id'];
+            $job_local->save();
 
             return response()->json([
                 'success' => true,
