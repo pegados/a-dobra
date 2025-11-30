@@ -11,6 +11,7 @@ use Illuminate\Queue\SerializesModels;
 use App\Services\SlurmClusterService;
 use App\Models\job;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class SlurmStatusChecker implements ShouldQueue
 {
@@ -50,7 +51,20 @@ class SlurmStatusChecker implements ShouldQueue
                 ->where('id_slurm', $id_slurm_job)
                 ->update(['status' => 'F']);
 
+        $job_local = DB::table('jobs')
+                ->where('id_slurm', $id_slurm_job)->get();
+
+
         //baixa o resultado da execução do job
-        
+        $arquivos_baixados = $this->slurmService->downloadJobResults($job_local->remote_dir);
+
+        if(count($arquivos_baixados) == 0){
+            Log::error('Erro ao baixar os arquivos do Job');
+            return;
+        }
+
+        //limpar os diretorios do computador remoto
+        limpar_ok = $this->slurmService->cleanupJob($job_local->remote_dir);
+        return;
     }
 }

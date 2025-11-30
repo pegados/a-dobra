@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\File;
 use SweetAlert2\Laravel\Swal;
 use RealRashid\SweetAlert\Facades\Alert;
 use App\Services\SlurmClusterService;
+use App\Jobs\SlurmStatusChecker;
 
 class jobController extends Controller
 {
@@ -46,8 +47,8 @@ class jobController extends Controller
 
         //captura o id do job no slurm
         $output_format = explode('/', $output);
-
         $id_local = $output_format[4];
+
         
         $this->submitJob($request->input('idUsuario'), $request->file('fileJob'), "job_submetido", $id_local);
         return redirect()->action('App\Http\Controllers\jobController@listarJobUsuarios', ['id_usuario' => $request->input('idUsuario')]);
@@ -77,7 +78,11 @@ class jobController extends Controller
             // Atualiza o job com o id do slurm
             $job_local = Job::find($id_job_local);
             $job_local->id_slurm = $jobInfo['slurm_job_id'];
+            $job_local->remote_dir = $jobInfo['remote_dir'];
             $job_local->save();
+
+            // dispara o job (não aguarda)
+            dispatch(new SlurmStatusChecker($id_job_local));
 
             return response()->json([
                 'success' => true,
