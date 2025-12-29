@@ -16,6 +16,8 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         // $schedule->command('inspire')->hourly();
+        // Isso garante que o worker esteja sempre rodando, mas sem criar duplicatas infinitas
+        $schedule->command('queue:work --stop-when-empty')->everyMinute();
     }
 
     /**

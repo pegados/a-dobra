@@ -124,7 +124,7 @@ class SlurmClusterService
 
             // Submete o job
             // local onde iremos indicar como executar o script via slurm 
-            $submitCommand = "cd {$remoteJobDir} && ssh veredas sbatch /home/alphafold/scripts/exec_alphafold3_manual.sh";
+            $submitCommand = "cd {$remoteJobDir} && ssh veredas sbatch /home/alphafold/scripts/alphafold3_web.sh";
             $output = $this->ssh->exec($submitCommand);
 
             // Extrai o ID do job do Slurm
