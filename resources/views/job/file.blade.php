@@ -25,7 +25,7 @@
                             <tr>
                                 <td></td>
                                 <td><a>{{File::name($file)}}</a></td>
-                                <td><a href='/{{$file->getPathname()}}' target="_blank" class="btn btn-info btn-icon-split btn-sm">                                    
+                                <td><a href="{{route('jobs.download', ['path'=>$file->getPathname()]) }}" target="_blank" class="btn btn-info btn-icon-split btn-sm">                                    
 									<span class="icon text-white-50">
 										<i class="fa fa-download"></i>
 									</span>	

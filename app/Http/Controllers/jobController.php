@@ -139,19 +139,36 @@ class jobController extends Controller
         }
     }
 
+    /*Disponibiliza os arquivos para downoad na interface web*/
+    public function download(Request $request)
+    {
+        $path = $request->query('path');
+
+        if (!File::exists($path)) {
+           abort(404);
+        }
+
+        return response()->download($path);
+    }
+
     public function listarJobUsuarios($id_usuario)
     {
-        $jobs = DB::table('jobs')->where('id_usuario', '=', $id_usuario)->get();
+        $jobs = DB::table('jobs')
+                ->where('id_usuario', '=', $id_usuario)
+                ->orderBy('id', 'desc')
+                ->get();
         //var_dump($jobs);
         return view('job.jobs')->with('listJobs', $jobs);
     }
-
+    /*
+     * Listar os arquivos para mostrar na interface web
+     */
     public function listarFilesJob($id_job){
         $job = DB::table('jobs')->where('id', '=', $id_job)->first();
         $output = $job->output;
         
         $files = File::allFiles($output);
-        if(sizeof($files)>= 10 && $job->status == 'P'){
+        if(sizeof($files)>= 10 && $job->status == 'F'){
             DB::table('jobs')
             ->where('id','=' ,$id_job)
             ->update(['status' => 'F']);

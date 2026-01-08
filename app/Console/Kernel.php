@@ -17,6 +17,7 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('inspire')->hourly();
         // Isso garante que o worker esteja sempre rodando, mas sem criar duplicatas infinitas
+        //Log::info("Executando tarefa agendada");
         $schedule->command('queue:work --stop-when-empty')->everyMinute();
     }
 

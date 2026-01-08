@@ -50,6 +50,7 @@ Route::middleware('Autorizacao')->group(function () {
     Route::post('/job', [jobController::class, 'salvar'])->name('job.salvar');
     Route::get('/jobs/{id_usuario}', 'App\Http\Controllers\jobController@listarJobUsuarios')->name('job.lista_usuario')->where('id_usuario', '[0-9]+');
     Route::get('/jobs/files/{id_job}', 'App\Http\Controllers\jobController@listarFilesJob')->name('job.lista_files')->where('id_job', '[0-9]+');
+    Route::get('/jobs/download', [JobController::class, 'download'])->name('jobs.download');
 
     Route::post('/logout', [LogoutController::class, 'destroy'])->name('logout');
 });

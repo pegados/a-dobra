@@ -7,6 +7,7 @@ use phpseclib3\Net\SFTP;
 use phpseclib3\Crypt\PublicKeyLoader;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class SlurmClusterService
 {
@@ -101,14 +102,17 @@ class SlurmClusterService
         $jobId = uniqid('laravel_job_');
         $jobName = $jobName ?: $jobId;
         $remoteJobDir = "{$this->remoteWorkDir}/{$jobId}";
+        $fileSubmit = "";
 
         try {
-            // Cria diretório específico para o job
+            // Cria diretório específico para o job, por exemplo,  /tmp/laravel_jobs/laravel_job_69532e3e7b0a6/
             $this->ssh->exec("mkdir -p {$remoteJobDir}");
 
             // Upload dos arquivos de entrada
             foreach ($inputFiles as $localFile => $remoteFile) {
+                $this->$fileSubmit = $localFile;
                 $remotePath = "{$remoteJobDir}/{$remoteFile}";
+                
                 if (!$this->sftp->put($remotePath, $localFile, SFTP::SOURCE_LOCAL_FILE)) {
                     throw new \Exception("Falha ao enviar arquivo: {$localFile}");
                 }
@@ -121,10 +125,15 @@ class SlurmClusterService
             if (!$this->sftp->put($scriptPath, $slurmScript)) {
                 throw new \Exception('Falha ao enviar script Slurm');
             }*/
+            //upload input to veredas
+            $uploadCommand = "scp ".$remoteJobDir."/". $fileSubmit ."veredas:/home/alphafold/inputs/" .$fileSubmit;
+            $this->ssh->exec($uploadCommand);
 
             // Submete o job
             // local onde iremos indicar como executar o script via slurm 
-            $submitCommand = "cd {$remoteJobDir} && ssh veredas sbatch /home/alphafold/scripts/alphafold3_web.sh";
+            $submitCommand = "ssh veredas sbatch /home/alphafold/scripts/alphafold3_web.sh " ."/home/alphafold/inputs/" .$fileSubmit;
+
+            Log::info("comando de submissão executado: $submitCommand");
             $output = $this->ssh->exec($submitCommand);
 
             // Extrai o ID do job do Slurm
@@ -156,7 +165,7 @@ class SlurmClusterService
     {
         $this->connect();
 
-        $command = "squeue -j {$slurmJobId} --format='%T' --noheader 2>/dev/null || echo 'COMPLETED'";
+        $command = "ssh veredas squeue -j {$slurmJobId} --format='%T' --noheader 2>/dev/null || echo 'COMPLETED'";
         $status = trim($this->ssh->exec($command));
 
         return $status ?: 'COMPLETED';
@@ -168,56 +177,49 @@ class SlurmClusterService
     public function waitForJob($slurmJobId, $maxWaitTime = 3600, $checkInterval = 30)
     {
         $startTime = time();
-        //Log::info("Executando o waitForJob");
+        Log::info("Executando o waitForJob");
         while (time() - $startTime < $maxWaitTime) {
             $status = $this->getJobStatus($slurmJobId);
-            
+
             if (in_array($status, ['COMPLETED', 'FAILED', 'CANCELLED', 'TIMEOUT'])) {
                 return $status;
             }
-            
+
             sleep($checkInterval);
         }
-        
+
         return 'TIMEOUT';
     }
 
     /**
      * Baixa arquivos de saída do job
      */
-    public function downloadJobResults($remoteJobDir, $outputFiles = ['*.out', '*.err', '*.log'])
+    public function downloadJobResults($id_job_slurm, $remoteJobDir, $outputFiles = ['*.out', '*.err', '*.log'])
     {
         $this->connect();
-        
+
         $downloadedFiles = [];
+        $remotePath = $remoteJobDir."/".$id_job_slurm."/";
+
+        $job_local = DB::table('jobs')
+            ->where('id_slurm', $id_job_slurm)->first();
         
         try {
-            // Lista arquivos no diretório remoto
-            $files = $this->sftp->nlist($remoteJobDir);
-            
-            foreach ($outputFiles as $pattern) {
-                $matchingFiles = $this->getMatchingFiles($files, $pattern);
-                
-                foreach ($matchingFiles as $file) {
-                    $remotePath = "{$remoteJobDir}/{$file}";
-                    $localPath = storage_path("app/slurm_results/{$file}");
-                    
-                    // Cria diretório local se não existir
-                    $localDir = dirname($localPath);
-                    if (!is_dir($localDir)) {
-                        mkdir($localDir, 0755, true);
-                    }
-                    
-                    // Baixa o arquivo
-                    if ($this->sftp->get($remotePath, $localPath)) {
-                        $downloadedFiles[] = $localPath;
-                        Log::info("Arquivo baixado: {$file}");
-                    }
-                }
+            $localPath = storage_path($job_local->output);
+            //cria o diretorio de destino se não existir
+            if (!File::exists($localPath)){
+               File::makeDirectory($localPath, 0755, true);
             }
-            
+
+            //copia tudo (recursivo)
+            File::copyDirectory($remotePath, $localPath);
+
+            Log::info("Diretório copiado de {$remotePath} para {$localPath}");
+            $downloadedFiles[]=$localPath;
+
+
             return $downloadedFiles;
-            
+                        
         } catch (\Exception $e) {
             Log::error("Erro ao baixar resultados: " . $e->getMessage());
             throw $e;
@@ -232,7 +234,8 @@ class SlurmClusterService
         $this->connect();
         
         $command = "rm -rf {$remoteJobDir}";
-        $this->ssh->exec($command);
+       
+     $this->ssh->exec($command);
         
         Log::info("Diretório remoto limpo: {$remoteJobDir}");
     }
