@@ -51,11 +51,11 @@ class jobController extends Controller
 
         //echo $id_local;
         
-        $this->submitJob($request->input('idUsuario'), $request->file('fileJob'), "job_submetido", $id_local);
+        $this->submitJob($request->input('idUsuario'), $request->file('fileJob'), "job_submetido", $id_local, $request->input('script'));
         return redirect()->action('App\Http\Controllers\jobController@listarJobUsuarios', ['id_usuario' => $request->input('idUsuario')]);
     }
 
-    public function submitJob($idUsuario, $inputFile, $jobname, $id_job_local){
+    public function submitJob($idUsuario, $inputFile, $jobname, $id_job_local, $script){
         try {
             // Script que será executado no cluster
             // não precisa, pois o script já existe lá 
@@ -74,7 +74,8 @@ class jobController extends Controller
             $jobInfo = $this->slurmService->submitJob(
                 null, // configurado para poder ser null
                 $inputFiles,//será substituido por $filenameComExtensao que vem da função de salvar
-                $jobname
+                $jobname,
+                $script
             );
 
             //var_dump($jobInfo);

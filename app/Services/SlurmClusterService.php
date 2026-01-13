@@ -95,7 +95,7 @@ class SlurmClusterService
     /**
      * Submete um job para o Slurm
      */
-    public function submitJob($jobScript = null, $inputFiles = [], $jobName = null)
+    public function submitJob($jobScript = null, $inputFiles = [], $jobName = null, $script)
     {
         $this->connect();
 
@@ -131,7 +131,7 @@ class SlurmClusterService
 
             // Submete o job
             // local onde iremos indicar como executar o script via slurm 
-            $submitCommand = "ssh veredas sbatch /home/alphafold/scripts/alphafold3_web.sh " ."/home/alphafold/inputs/" .$fileSubmit;
+            $submitCommand = "ssh veredas sbatch /home/alphafold/scripts/" .$script ." /home/alphafold/inputs/" .$fileSubmit;
 
             Log::info("comando de submissão executado: $submitCommand");
             $output = $this->ssh->exec($submitCommand);

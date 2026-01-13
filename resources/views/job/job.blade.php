@@ -31,8 +31,8 @@
                         <label for="fruta">Execution select:</label>
                         <div class="input-group col-xs-12 d-flex align-items-center">                            
                             <select name="script" id="script">
-                              <option value="modelagem">Moldeing</option>
-                              <option value="dinamica">Dynamic</option>
+                              <option value="alphafold3_web.sh">Moldeing</option>
+                              <option value="pipeline_dinamica.sh">Dynamics</option>
                             </select>
                         </div>
                     </div>

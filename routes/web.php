@@ -44,6 +44,7 @@ Route::post('/forgot-password/{token}', [ForgotPasswordController::class, 'reset
  * Rotas protegidas pelo Middleware Autorizacao
  */
 Route::middleware('Autorizacao')->group(function () {
+     Route::get('/jobs/dashboard', [JobController::class, 'dashboard'])->name('jobs.dashboard');
     Route::get('/job', function () {
         return view('/job/job');
     });
