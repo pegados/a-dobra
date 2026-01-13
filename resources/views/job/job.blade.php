@@ -28,6 +28,13 @@
                                 <button class="file-upload-browse btn btn-primary" type="button">Upload</button>
                             </span>
                         </div>
+                        <label for="fruta">Execution select:</label>
+                        <div class="input-group col-xs-12 d-flex align-items-center">                            
+                            <select name="script" id="script">
+                              <option value="modelagem">Moldeing</option>
+                              <option value="dinamica">Dynamic</option>
+                            </select>
+                        </div>
                     </div>
                     <button type="submit" class="btn btn-primary me-2">Submit</button>
                 </form>
