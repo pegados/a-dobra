@@ -44,7 +44,7 @@ class LoginController extends Controller
 
             toast('Success Login!', 'success');
         
-            return redirect()->intended('/job');
+            return redirect()->intended('/dashboard');
         } else {
             toast('Failed Login!', 'error');
         }

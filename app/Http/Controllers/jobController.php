@@ -11,6 +11,7 @@ use SweetAlert2\Laravel\Swal;
 use RealRashid\SweetAlert\Facades\Alert;
 use App\Services\SlurmClusterService;
 use App\Jobs\SlurmStatusChecker;
+use Illuminate\Support\Facades\Auth;
 
 class jobController extends Controller
 {
@@ -99,6 +100,21 @@ class jobController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    public function dashboard(){
+
+        $id_usuario = Auth::id();
+
+        $qtdJobs = Job::where('id_usuario', $id_usuario)->get();
+
+        $totalJobs = $qtdJobs->count();
+
+        $qtdPendentes = $qtdJobs->where('status', 'like', 'P')->count();
+
+        $qtdFinalizados = $totalJobs - $qtdPendentes;
+
+        return view('dashboard', compact('qtdPendentes','qtdFinalizados','totalJobs'));
     }
 
     public function getJobStatus($slurmJobId)

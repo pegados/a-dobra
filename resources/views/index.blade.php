@@ -38,7 +38,7 @@
           <span class="nav-link">Menu</span>
         </li>
         <li class="nav-item menu-items">
-          <a class="nav-link" href="/job">
+          <a class="nav-link" href="/dashboard">
             <span class="menu-icon">
               <i class="mdi mdi-speedometer"></i>
             </span>
